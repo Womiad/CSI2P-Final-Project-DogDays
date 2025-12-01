@@ -17,9 +17,14 @@
 
 // fixed settings
 constexpr char game_icon_img_path[] = "./assets/image/game_icon.png";
-constexpr char game_start_sound_path[] = "./assets/sound/growl.wav";
+// constexpr char game_start_sound_path[] = "./assets/sound/growl.wav";
 constexpr char background_img_path[] = "./assets/image/Background.png";
-constexpr char background_sound_path[] = "./assets/sound/BackgroundMusic.ogg";
+constexpr char background_sound_path[] = "./assets/sound/Journey_fixed.wav";
+
+constexpr char start_menu_banner_path[] = "./assets/image/banner_menu.png";
+constexpr char start_menu_dog_path[] = "./assets/image/dog1.png";
+constexpr char start_menu_btn_path[] = "./assets/image/start_btn.png";
+constexpr char start_menu_btn_hover_path[] = "./assets/image/start_btn_hover.png";
 
 /**
  * @brief Game entry.
@@ -68,47 +73,74 @@ Game::execute() {
  * @details Only one timer is created since a game and all its data should be processed synchronously.
  */
 Game::Game(bool testMode) {
-	DataCenter *DC = DataCenter::get_instance();
-	GAME_ASSERT(al_init(), "failed to initialize allegro.");
+    DataCenter *DC = DataCenter::get_instance();
+    GAME_ASSERT(al_init(), "failed to initialize allegro.");
 
-	// initialize allegro addons
-	bool addon_init = true;
-	addon_init &= al_init_primitives_addon();
-	addon_init &= al_init_font_addon();
-	addon_init &= al_init_ttf_addon();
-	addon_init &= al_init_image_addon();
-	addon_init &= al_init_acodec_addon();
-	GAME_ASSERT(addon_init, "failed to initialize allegro addons.");
+    // initialize addons not related to audio
+    bool addon_init = true;
+    addon_init &= al_init_primitives_addon();
+    addon_init &= al_init_font_addon();
+    addon_init &= al_init_ttf_addon();
+    addon_init &= al_init_image_addon();
+    // !!! Do NOT init acodec here !!!
+    GAME_ASSERT(addon_init, "failed to initialize allegro addons.");
 
-	if(testMode) {
-		timer = nullptr;
-		event_queue = nullptr;
-		display = nullptr;
-		debug_log("Game initialized in test mode.\n");
-		return;
-	}
+    if (testMode) {
+        timer = nullptr;
+        event_queue = nullptr;
+        display = nullptr;
+        debug_log("Game initialized in test mode.\n");
+        return;
+    }
 
-	// initialize events
+    // --- initialize events & audio (correct order) ---
 	bool event_init = true;
 	event_init &= al_install_keyboard();
 	event_init &= al_install_mouse();
-	event_init &= al_install_audio();
+	event_init &= al_install_audio();         // MUST be before acodec
 	GAME_ASSERT(event_init, "failed to initialize allegro events.");
 
-	// initialize game body
-	GAME_ASSERT(
-		timer = al_create_timer(1.0 / DC->FPS),
-		"failed to create timer.");
-	GAME_ASSERT(
-		event_queue = al_create_event_queue(),
-		"failed to create event queue.");
-	GAME_ASSERT(
-		display = al_create_display(DC->window_width, DC->window_height),
-		"failed to create display.");
+	// 建立 voice
+	ALLEGRO_VOICE* voice = al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+	GAME_ASSERT(voice, "Failed to create voice");
 
-	debug_log("Game initialized.\n");
-	game_init();
+	// 建立 mixer
+	ALLEGRO_MIXER* mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+	GAME_ASSERT(mixer, "Failed to create mixer");
+
+	// attach mixer 到 voice
+	bool attached = al_attach_mixer_to_voice(mixer, voice);
+	GAME_ASSERT(attached, "Failed to attach mixer to voice");
+
+	// 設為 default mixer
+	al_set_default_mixer(mixer);
+
+	// 現在初始化 acodec
+	GAME_ASSERT(al_init_acodec_addon(), "failed to init acodec addon.");
+
+	// 不需要 al_reserve_samples，因為已經手動建立 mixer 了
+
+    // optional debug
+    printf("[DEBUG] default mixer = %p\n", al_get_default_mixer());
+
+    // --- initialize game body ---
+    GAME_ASSERT(
+        timer = al_create_timer(1.0 / DC->FPS),
+        "failed to create timer."
+    );
+    GAME_ASSERT(
+        event_queue = al_create_event_queue(),
+        "failed to create event queue."
+    );
+    GAME_ASSERT(
+        display = al_create_display(DC->window_width, DC->window_height),
+        "failed to create display."
+    );
+
+    debug_log("Game initialized.\n");
+    game_init();
 }
+
 
 /**
  * @brief Initialize all auxiliary resources.
@@ -142,6 +174,12 @@ Game::game_init() {
 
 	// game start
 	background = IC->get(background_img_path);
+	// start menu resources
+	menu_banner = IC -> get(start_menu_banner_path);
+	menu_dog= IC -> get(start_menu_dog_path);
+	menu_start_btn = IC -> get(start_menu_btn_path);
+	menu_start_btn_hover = IC -> get(start_menu_btn_hover_path);
+
 	debug_log("Game state: change to START\n");
 	state = STATE::START;
 	al_start_timer(timer);
@@ -162,11 +200,18 @@ Game::game_update() {
 
 	switch(state) {
 		case STATE::START: {
-			static bool is_played = false;
+			// static bool is_played = false;
 			static ALLEGRO_SAMPLE_INSTANCE *instance = nullptr;
+			// if(!is_played) {
+			// 	instance = SC->play(game_start_sound_path, ALLEGRO_PLAYMODE_ONCE);
+			// 	DC->level->load_level(1);
+			// 	is_played = true;
+			// }
+
+			//bgm
+			static bool is_played = false;
 			if(!is_played) {
-				instance = SC->play(game_start_sound_path, ALLEGRO_PLAYMODE_ONCE);
-				DC->level->load_level(1);
+				background = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
 				is_played = true;
 			}
 
@@ -253,21 +298,56 @@ Game::game_draw() {
 	// 		ui->draw();
 	// 		OC->draw();
 	// 	}
-	// }
-	// switch(state) {
-	// 	case STATE::START: {
-	// 	} case STATE::LEVEL: {
-	// 		break;
-	// 	} case STATE::PAUSE: {
-	// 		// game layout cover
-	// 		al_draw_filled_rectangle(0, 0, DC->window_width, DC->window_height, al_map_rgba(50, 50, 50, 64));
-	// 		al_draw_text(
-	// 			FC->caviar_dreams[FontSize::LARGE], al_map_rgb(255, 255, 255),
-	// 			DC->window_width/2., DC->window_height/2.,
-	// 			ALLEGRO_ALIGN_CENTRE, "GAME PAUSED");
-	// 		break;
-	// 	} case STATE::END: {
-	// 	}
+	}
+	switch(state) {
+		case STATE::START: {
+
+			// 繪製標題圖片(置中或你想要的位置)
+            int title_w = al_get_bitmap_width(menu_banner);
+            int title_h = al_get_bitmap_height(menu_banner);
+            int title_x = (DC->window_width) / 5 * 2;
+            int title_y = DC->window_height / 6;  // 放在上方
+            al_draw_bitmap(menu_banner, title_x, title_y, 0);
+            
+            // 繪製狗圖片
+            int deco_w = al_get_bitmap_width(menu_dog);
+            int deco_h = al_get_bitmap_height(menu_dog);
+            int deco_x = DC->window_width * 0.03;
+            int deco_y = (DC->window_height / 2 - deco_h / 2) * 1.2;
+            al_draw_bitmap(menu_dog, deco_x, deco_y, 0);
+            
+            // 繪製開始按鈕
+            // 繪製裝飾圖片
+            int btn_w = al_get_bitmap_width(menu_start_btn);
+            int btn_h = al_get_bitmap_height(menu_start_btn);
+            int btn_x = (DC->window_width) / 5 * 2 + (title_w/2) - (btn_w/2);
+            int btn_y = (DC->window_height / 2 - btn_h / 2) * 1.6;  // 放在中間
+
+			bool mouse_on_button = (DC->mouse.x >= btn_x && 
+                                   DC->mouse.x <= btn_x + btn_w &&
+                                   DC->mouse.y >= btn_y && 
+                                   DC->mouse.y <= btn_y + btn_h);
+            
+            if(mouse_on_button) {
+            	al_draw_bitmap(menu_start_btn_hover, btn_x, btn_y, 0);
+                
+            }else{
+            	al_draw_bitmap(menu_start_btn, btn_x, btn_y, 0);
+			}
+
+			break;
+		} case STATE::LEVEL: {
+			break;
+		} case STATE::PAUSE: {
+			// game layout cover
+			// al_draw_filled_rectangle(0, 0, DC->window_width, DC->window_height, al_map_rgba(50, 50, 50, 64));
+			// al_draw_text(
+			// 	FC->caviar_dreams[FontSize::LARGE], al_map_rgb(255, 255, 255),
+			// 	DC->window_width/2., DC->window_height/2.,
+			// 	ALLEGRO_ALIGN_CENTRE, "GAME PAUSED");
+			break;
+		} case STATE::END: {
+		}
 	}
 	al_flip_display();
 }

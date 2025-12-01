@@ -33,6 +33,13 @@ private:
 	ALLEGRO_EVENT event;
 	ALLEGRO_BITMAP *game_icon;
 	ALLEGRO_BITMAP *background;
+
+	//start menu 相關資源
+	ALLEGRO_BITMAP *menu_banner;
+	ALLEGRO_BITMAP *menu_dog;
+	ALLEGRO_BITMAP *menu_start_btn;
+	ALLEGRO_BITMAP *menu_start_btn_hover;
+
 private:
 	ALLEGRO_DISPLAY *display;
 	ALLEGRO_TIMER *timer;

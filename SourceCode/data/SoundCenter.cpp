@@ -25,19 +25,11 @@ SoundCenter::~SoundCenter() {
  */
 bool
 SoundCenter::init() {
-	bool res = true;
-	res &= al_restore_default_mixer();
-	res &= al_reserve_samples(SoundSetting::RESERVED_SAMPLES);
-	res &= (al_get_default_mixer() != nullptr);
-	return res;
+	return (al_get_default_mixer() != nullptr);
 }
 
 /**
  * @brief The update function searches all sample instances and destroy instances that have finished playing.
- * @details An instance that has finished playing needs to satisfy all the following conditions:
- * @details * The instance is paused (or stopped).
- * @details * The audio track position is 0 (at initial position).
- * @details * The instance is not set to loop mode.
  */
 void
 SoundCenter::update() {
@@ -62,9 +54,6 @@ SoundCenter::update() {
 
 /**
  * @brief Remove a sample.
- * @details This function will also destroy all sample instances played by the sample to be destroyed.
- * @param path audio path.
- * @return True if the sample of the path is destroyed. False if the sample does not exist.
  */
 bool
 SoundCenter::erase_sample(const std::string &path) {
@@ -85,32 +74,85 @@ SoundCenter::erase_sample(const std::string &path) {
  * @brief Play an audio.
  * @param path the audio file path.
  * @param mode the play mode defined by allegro5.
- * @return The curresponding played ALLEGRO_SAMPLE_INSTANCE* instance.
- * @details For the list of supported play modes, refer to [manual](https://liballeg.org/a5docs/trunk/audio.html#allegro_playmode).
+ * @return The corresponding played ALLEGRO_SAMPLE_INSTANCE* instance.
  */
 ALLEGRO_SAMPLE_INSTANCE*
 SoundCenter::play(const string &path, ALLEGRO_PLAYMODE mode) {
+	printf("[DEBUG] SoundCenter::play called with path: %s\n", path.c_str());
+	
+	// 檢查 default mixer 是否存在
+	ALLEGRO_MIXER* mixer = al_get_default_mixer();
+	if (!mixer) {
+		printf("[ERROR] No default mixer available!\n");
+		return nullptr;
+	}
+	printf("[DEBUG] Default mixer found: %p\n", mixer);
+
 	auto it = samples.find(path);
 	if(it == samples.end()) {
+		// 第一次載入這個音檔
+		printf("[DEBUG] Loading new sample: %s\n", path.c_str());
 		ALLEGRO_SAMPLE *sample = al_load_sample(path.c_str());
-		GAME_ASSERT(sample != nullptr, "cannot find sample: %s.", path.c_str());
+		
+		if (sample == nullptr) {
+			printf("[ERROR] Failed to load sample: %s\n", path.c_str());
+			printf("[ERROR] Make sure the file exists and is a valid audio format\n");
+			return nullptr;
+		}
+		
+		printf("[DEBUG] Sample loaded successfully: %p\n", sample);
 		it = samples.insert({path, {sample, {}}}).first;
+	} else {
+		printf("[DEBUG] Using cached sample for: %s\n", path.c_str());
 	}
+	
 	auto &[sample, insts] = it->second;
+	
+	// 確保 sample 不為空
+	if (sample == nullptr) {
+		printf("[ERROR] Sample is null for path: %s\n", path.c_str());
+		return nullptr;
+	}
+	
+	printf("[DEBUG] Creating sample instance from sample: %p\n", sample);
 	ALLEGRO_SAMPLE_INSTANCE *instance = al_create_sample_instance(sample);
+	
+	if (instance == nullptr) {
+		printf("[ERROR] Failed to create sample instance!\n");
+		return nullptr;
+	}
+	
+	printf("[DEBUG] Sample instance created: %p\n", instance);
 	insts.emplace_back(instance);
 
 	al_set_sample_instance_playmode(instance, mode);
-	al_attach_sample_instance_to_mixer(instance, al_get_default_mixer());
-	al_play_sample_instance(instance);
+	
+	bool attached = al_attach_sample_instance_to_mixer(instance, mixer);
+	if (!attached) {
+		printf("[ERROR] Failed to attach sample instance to mixer!\n");
+		al_destroy_sample_instance(instance);
+		insts.pop_back();
+		return nullptr;
+	}
+	
+	printf("[DEBUG] Sample instance attached to mixer\n");
+	
+	bool playing = al_play_sample_instance(instance);
+	if (!playing) {
+		printf("[ERROR] Failed to play sample instance!\n");
+	} else {
+		printf("[DEBUG] Sample instance playing successfully\n");
+	}
+	
 	return instance;
 }
 
 /**
- * @brief Check is an instance is currently playing.
+ * @brief Check if an instance is currently playing.
  */
 bool
 SoundCenter::is_playing(const ALLEGRO_SAMPLE_INSTANCE *const inst) {
+	if (inst == nullptr) return false;
 	return al_get_sample_instance_playing(inst);
 }
 
@@ -119,6 +161,8 @@ SoundCenter::is_playing(const ALLEGRO_SAMPLE_INSTANCE *const inst) {
  */
 void
 SoundCenter::toggle_playing(ALLEGRO_SAMPLE_INSTANCE *inst) {
+	if (inst == nullptr) return;
+	
 	bool is_playing = al_get_sample_instance_playing(inst);
 	if(is_playing) {
 		unsigned int pos = al_get_sample_instance_position(inst);
