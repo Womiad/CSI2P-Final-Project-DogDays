@@ -3,6 +3,8 @@
 
 #include <allegro5/allegro.h>
 #include "UI.h"
+#include "Road.h"
+#include "Dog.h"
 
 /**
  * @brief Main class that runs the whole game.
@@ -39,6 +41,11 @@ private:
 	ALLEGRO_BITMAP *menu_dog;
 	ALLEGRO_BITMAP *menu_start_btn;
 	ALLEGRO_BITMAP *menu_start_btn_hover;
+
+	//遊玩階段 相關資源
+	Road *road;
+	Dog *dog;
+	
 
 private:
 	ALLEGRO_DISPLAY *display;

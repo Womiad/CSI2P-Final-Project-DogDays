@@ -33,39 +33,57 @@ constexpr char start_menu_btn_hover_path[] = "./assets/image/start_btn_hover.png
  */
 void
 Game::execute() {
-	DataCenter *DC = DataCenter::get_instance();
-	// main game loop
-	bool run = true;
-	while(run) {
-		// process all events here
-		al_wait_for_event(event_queue, &event);
-		switch(event.type) {
-			case ALLEGRO_EVENT_TIMER: {
-				run &= game_update();
-				game_draw();
-				break;
-			} case ALLEGRO_EVENT_DISPLAY_CLOSE: { // stop game
-				run = false;
-				break;
-			} case ALLEGRO_EVENT_KEY_DOWN: {
-				DC->key_state[event.keyboard.keycode] = true;
-				break;
-			} case ALLEGRO_EVENT_KEY_UP: {
-				DC->key_state[event.keyboard.keycode] = false;
-				break;
-			} case ALLEGRO_EVENT_MOUSE_AXES: {
-				DC->mouse.x = event.mouse.x;
-				DC->mouse.y = event.mouse.y;
-				break;
-			} case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: {
-				DC->mouse_state[event.mouse.button] = true;
-				break;
-			} case ALLEGRO_EVENT_MOUSE_BUTTON_UP: {
-				DC->mouse_state[event.mouse.button] = false;
-				break;
-			} default: break;
-		}
-	}
+    DataCenter *DC = DataCenter::get_instance();
+    bool run = true;
+    bool redraw = false;
+    
+    while(run) {
+        ALLEGRO_EVENT event;
+        al_wait_for_event(event_queue, &event);
+        
+        // ✅ 批次處理所有累積的事件
+        do {
+            switch(event.type) {
+                case ALLEGRO_EVENT_TIMER: {
+                    run &= game_update();
+                    redraw = true;
+                    break;
+                }
+                case ALLEGRO_EVENT_DISPLAY_CLOSE: {
+                    run = false;
+                    break;
+                }
+                case ALLEGRO_EVENT_KEY_DOWN: {
+                    DC->key_state[event.keyboard.keycode] = true;
+                    break;
+                }
+                case ALLEGRO_EVENT_KEY_UP: {
+                    DC->key_state[event.keyboard.keycode] = false;
+                    break;
+                }
+                case ALLEGRO_EVENT_MOUSE_AXES: {
+                    DC->mouse.x = event.mouse.x;
+                    DC->mouse.y = event.mouse.y;
+                    break;
+                }
+                case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: {
+                    DC->mouse_state[event.mouse.button] = true;
+                    break;
+                }
+                case ALLEGRO_EVENT_MOUSE_BUTTON_UP: {
+                    DC->mouse_state[event.mouse.button] = false;
+                    break;
+                }
+                default: break;
+            }
+        } while(al_get_next_event(event_queue, &event));  // ✅ 處理所有事件
+        
+        // 所有事件處理完後才繪製
+        if(redraw) {
+            game_draw();
+            redraw = false;
+        }
+    }
 }
 
 /**
@@ -132,6 +150,11 @@ Game::Game(bool testMode) {
         event_queue = al_create_event_queue(),
         "failed to create event queue."
     );
+
+    al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_OPENGL);
+    al_set_new_display_option(ALLEGRO_VSYNC, 0, ALLEGRO_SUGGEST);  // ← 關閉 VSync
+    // 不設定 SWAP_METHOD，讓系統自動選擇
+    
     GAME_ASSERT(
         display = al_create_display(DC->window_width, DC->window_height),
         "failed to create display."
@@ -170,6 +193,7 @@ Game::game_init() {
 	ui = new UI();
 	ui->init();
 
+
 	DC->level->init();
 
 	// game start
@@ -179,6 +203,16 @@ Game::game_init() {
 	menu_dog= IC -> get(start_menu_dog_path);
 	menu_start_btn = IC -> get(start_menu_btn_path);
 	menu_start_btn_hover = IC -> get(start_menu_btn_hover_path);
+
+	// playing scene resources
+	road = new Road();
+	road->init();
+    dog = new Dog();
+    dog -> init();
+
+
+    int refresh_rate = al_get_display_refresh_rate(display);
+    printf("[INFO] 顯示器刷新率: %d Hz\n", refresh_rate);
 
 	debug_log("Game state: change to START\n");
 	state = STATE::START;
@@ -193,6 +227,39 @@ Game::game_init() {
  */
 bool
 Game::game_update() {
+	static double last_update_time = al_get_time();
+    static int update_count = 0;
+    
+    double now = al_get_time();
+    double update_delta = now - last_update_time;
+    
+    update_count++;
+    
+    // ✅ 捕捉任何超過 20ms 的 update
+    if (update_delta > 0.020) {
+        printf("[!!! SLOW UPDATE !!!] Update %d: %.1f ms\n",
+               update_count, update_delta * 1000);
+    }
+    
+    last_update_time = now;
+	// static int frame_count = 0;
+    // static double last_time = al_get_time();
+    
+    // frame_count++;
+    
+    // if(frame_count % 600 == 0) {  // 每 600 幀
+    //     double now = al_get_time();
+    //     double elapsed = now - last_time;
+    //     double actual_fps = 600.0 / elapsed;
+        
+    //     printf("=== 600 幀檢查 ===\n");
+    //     printf("理論時間: 10.00 秒\n");
+    //     printf("實際時間: %.3f 秒\n", elapsed);
+    //     printf("實際 FPS: %.2f\n", actual_fps);
+    //     printf("==================\n\n");
+        
+    //     last_time = now;
+    // }
 	DataCenter *DC = DataCenter::get_instance();
 	OperationCenter *OC = OperationCenter::get_instance();
 	SoundCenter *SC = SoundCenter::get_instance();
@@ -200,13 +267,7 @@ Game::game_update() {
 
 	switch(state) {
 		case STATE::START: {
-			// static bool is_played = false;
 			static ALLEGRO_SAMPLE_INSTANCE *instance = nullptr;
-			// if(!is_played) {
-			// 	instance = SC->play(game_start_sound_path, ALLEGRO_PLAYMODE_ONCE);
-			// 	DC->level->load_level(1);
-			// 	is_played = true;
-			// }
 
 			//bgm
 			static bool is_played = false;
@@ -215,110 +276,9 @@ Game::game_update() {
 				is_played = true;
 			}
 
-			if(!SC->is_playing(instance)) {
-				// debug_log("<Game> state: change to LEVEL\n");
-				// state = STATE::LEVEL;
-			}
-			break;
-		} case STATE::LEVEL: {
-			static bool BGM_played = false;
-			if(!BGM_played) {
-				background = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
-				BGM_played = true;
-			}
-
-			if(DC->key_state[ALLEGRO_KEY_P] && !DC->prev_key_state[ALLEGRO_KEY_P]) {
-				SC->toggle_playing(background);
-				debug_log("<Game> state: change to PAUSE\n");
-				state = STATE::PAUSE;
-			}
-			if(DC->level->remain_monsters() == 0 && DC->monsters.size() == 0) {
-				debug_log("<Game> state: change to END\n");
-				state = STATE::END;
-			}
-			if(DC->player->HP == 0) {
-				debug_log("<Game> state: change to END\n");
-				state = STATE::END;
-			}
-			break;
-		} case STATE::PAUSE: {
-			if(DC->key_state[ALLEGRO_KEY_P] && !DC->prev_key_state[ALLEGRO_KEY_P]) {
-				SC->toggle_playing(background);
-				debug_log("<Game> state: change to LEVEL\n");
-				state = STATE::LEVEL;
-			}
-			break;
-		} case STATE::END: {
-			return false;
-		}
-	}
-	// If the game is not paused, we should progress update.
-	if(state != STATE::PAUSE) {
-		DC->player->update();
-		SC->update();
-		ui->update();
-		if(state != STATE::START) {
-			DC->level->update();
-			OC->update();
-		}
-	}
-	// game_update is finished. The states of current frame will be previous states of the next frame.
-	memcpy(DC->prev_key_state, DC->key_state, sizeof(DC->key_state));
-	memcpy(DC->prev_mouse_state, DC->mouse_state, sizeof(DC->mouse_state));
-	return true;
-}
-
-/**
- * @brief Draw the whole game and objects.
- */
-void
-Game::game_draw() {
-	DataCenter *DC = DataCenter::get_instance();
-	OperationCenter *OC = OperationCenter::get_instance();
-	FontCenter *FC = FontCenter::get_instance();
-
-	// Flush the screen first.
-	al_clear_to_color(al_map_rgb(100, 100, 100));
-	if(state != STATE::END) {
-		// background
-		al_draw_bitmap(background, 0, 0, 0);
-	// 	if(DC->game_field_length < DC->window_width)
-	// 		al_draw_filled_rectangle(
-	// 			DC->game_field_length, 0,
-	// 			DC->window_width, DC->window_height,
-	// 			al_map_rgb(100, 100, 100));
-	// 	if(DC->game_field_length < DC->window_height)
-	// 		al_draw_filled_rectangle(
-	// 			0, DC->game_field_length,
-	// 			DC->window_width, DC->window_height,
-	// 			al_map_rgb(100, 100, 100));
-	// 	// user interface
-	// 	if(state != STATE::START) {
-	// 		DC->level->draw();
-	// 		ui->draw();
-	// 		OC->draw();
-	// 	}
-	}
-	switch(state) {
-		case STATE::START: {
-
-			// 繪製標題圖片(置中或你想要的位置)
+			//如果點擊，前往下一階段
             int title_w = al_get_bitmap_width(menu_banner);
-            int title_h = al_get_bitmap_height(menu_banner);
-            int title_x = (DC->window_width) / 5 * 2;
-            int title_y = DC->window_height / 6;  // 放在上方
-            al_draw_bitmap(menu_banner, title_x, title_y, 0);
-            
-            // 繪製狗圖片
-            int deco_w = al_get_bitmap_width(menu_dog);
-            int deco_h = al_get_bitmap_height(menu_dog);
-            int deco_x = DC->window_width * 0.03;
-            int deco_y = (DC->window_height / 2 - deco_h / 2) * 1.2;
-            al_draw_bitmap(menu_dog, deco_x, deco_y, 0);
-            
-            // 繪製開始按鈕
-            // 繪製裝飾圖片
-            int btn_w = al_get_bitmap_width(menu_start_btn);
+			int btn_w = al_get_bitmap_width(menu_start_btn);
             int btn_h = al_get_bitmap_height(menu_start_btn);
             int btn_x = (DC->window_width) / 5 * 2 + (title_w/2) - (btn_w/2);
             int btn_y = (DC->window_height / 2 - btn_h / 2) * 1.6;  // 放在中間
@@ -328,28 +288,175 @@ Game::game_draw() {
                                    DC->mouse.y >= btn_y && 
                                    DC->mouse.y <= btn_y + btn_h);
             
-            if(mouse_on_button) {
-            	al_draw_bitmap(menu_start_btn_hover, btn_x, btn_y, 0);
-                
-            }else{
-            	al_draw_bitmap(menu_start_btn, btn_x, btn_y, 0);
-			}
+            if(mouse_on_button && (DC->mouse_state[1] && !DC->prev_mouse_state[1])) {
+            	state = STATE::LEVEL;   
+            }
 
 			break;
 		} case STATE::LEVEL: {
+			road -> update();
+            dog -> update();
+			// static bool BGM_played = false;
+			// if(!BGM_played) {
+			// 	background = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
+			// 	BGM_played = true;
+			// }
+
+			// if(DC->key_state[ALLEGRO_KEY_P] && !DC->prev_key_state[ALLEGRO_KEY_P]) {
+			// 	SC->toggle_playing(background);
+			// 	debug_log("<Game> state: change to PAUSE\n");
+			// 	state = STATE::PAUSE;
+			// }
+			// if(DC->level->remain_monsters() == 0 && DC->monsters.size() == 0) {
+			// 	debug_log("<Game> state: change to END\n");
+			// 	state = STATE::END;
+			// }
+			// if(DC->player->HP == 0) {
+			// 	debug_log("<Game> state: change to END\n");
+			// 	state = STATE::END;
+			// }
 			break;
 		} case STATE::PAUSE: {
-			// game layout cover
-			// al_draw_filled_rectangle(0, 0, DC->window_width, DC->window_height, al_map_rgba(50, 50, 50, 64));
-			// al_draw_text(
-			// 	FC->caviar_dreams[FontSize::LARGE], al_map_rgb(255, 255, 255),
-			// 	DC->window_width/2., DC->window_height/2.,
-			// 	ALLEGRO_ALIGN_CENTRE, "GAME PAUSED");
+			// if(DC->key_state[ALLEGRO_KEY_P] && !DC->prev_key_state[ALLEGRO_KEY_P]) {
+			// 	SC->toggle_playing(background);
+			// 	debug_log("<Game> state: change to LEVEL\n");
+			// 	state = STATE::LEVEL;
+			// }
 			break;
 		} case STATE::END: {
+			return false;
 		}
 	}
-	al_flip_display();
+	// If the game is not paused, we should progress update.
+	// if(state != STATE::PAUSE) {
+	// 	DC->player->update();
+	// 	SC->update();
+	// 	ui->update();
+	// 	if(state != STATE::START) {
+	// 		DC->level->update();
+	// 		OC->update();
+	// 	}
+	// }
+	// game_update is finished. The states of current frame will be previous states of the next frame.
+	memcpy(DC->prev_key_state, DC->key_state, sizeof(DC->key_state));
+	memcpy(DC->prev_mouse_state, DC->mouse_state, sizeof(DC->mouse_state));
+	return true;
+}
+
+/**
+ * @brief Draw the whole game and objects.
+ */
+void Game::game_draw() {
+    static double last_frame_time = al_get_time();
+    static int frame_count = 0;
+    static double max_frame_time = 0.0;
+    static int freeze_frame = -1;
+    
+    double now = al_get_time();
+    double frame_delta = now - last_frame_time;
+    
+    frame_count++;
+    
+    // ✅ 記錄最長的幀時間
+    if (frame_delta > max_frame_time) {
+        max_frame_time = frame_delta;
+        freeze_frame = frame_count;
+    }
+    
+    // ✅ 捕捉任何超過 18ms 的幀
+    if (frame_delta > 0.018) {
+        printf("[FREEZE] Frame %d: %.1f ms | Road offset: %d | State: %d\n",
+               frame_count, 
+               frame_delta * 1000,
+               (state == STATE::LEVEL && road) ? road->get_offset() : -1,
+               (int)state);
+    }
+    
+    last_frame_time = now;
+    
+    DataCenter *DC = DataCenter::get_instance();
+    ALLEGRO_BITMAP* backbuffer = al_get_backbuffer(display);
+    al_set_target_bitmap(backbuffer);
+
+    // ✅ 計時每個繪製階段
+    double t0 = al_get_time();
+    al_clear_to_color(al_map_rgb(100, 100, 100));
+    double t1 = al_get_time();
+    
+    if(state != STATE::END && background) {
+        al_draw_bitmap(background, 0, 0, 0);
+    }
+    double t2 = al_get_time();
+    
+    switch(state) {
+        case STATE::START: {
+            if (menu_banner) {
+                int title_w = al_get_bitmap_width(menu_banner);
+                int title_x = (DC->window_width) / 5 * 2;
+                int title_y = DC->window_height / 6;
+                al_draw_bitmap(menu_banner, title_x, title_y, 0);
+            }
+            
+            if (menu_dog) {
+                int deco_w = al_get_bitmap_width(menu_dog);
+                int deco_h = al_get_bitmap_height(menu_dog);
+                int deco_x = DC->window_width * 0.03;
+                int deco_y = (DC->window_height / 2 - deco_h / 2) * 1.2;
+                al_draw_bitmap(menu_dog, deco_x, deco_y, 0);
+            }
+            
+            if (menu_start_btn && menu_start_btn_hover) {
+                int title_w = al_get_bitmap_width(menu_banner);
+                int btn_w = al_get_bitmap_width(menu_start_btn);
+                int btn_h = al_get_bitmap_height(menu_start_btn);
+                int btn_x = (DC->window_width) / 5 * 2 + (title_w/2) - (btn_w/2);
+                int btn_y = (DC->window_height / 2 - btn_h / 2) * 1.6;
+
+                bool mouse_on_button = (DC->mouse.x >= btn_x && 
+                                       DC->mouse.x <= btn_x + btn_w &&
+                                       DC->mouse.y >= btn_y && 
+                                       DC->mouse.y <= btn_y + btn_h);
+                
+                if(mouse_on_button) {
+                    al_draw_bitmap(menu_start_btn_hover, btn_x, btn_y, 0);
+                } else {
+                    al_draw_bitmap(menu_start_btn, btn_x, btn_y, 0);
+                }
+            }
+            break;
+        }
+        case STATE::LEVEL: {
+            if (road) {
+                road->draw();
+            }
+            if (dog) {
+                dog->draw();
+            }
+            break;
+        }
+        case STATE::PAUSE:
+        case STATE::END:
+            break;
+    }
+    double t3 = al_get_time();
+    
+    al_flip_display();
+    double t4 = al_get_time();
+    
+    // ✅ 每 600 幀輸出詳細報告
+    if (frame_count % 600 == 0) {
+        printf("\n========== 600 幀效能報告 ==========\n");
+        printf("最大幀時間: %.2f ms (Frame %d)\n", max_frame_time * 1000, freeze_frame);
+        printf("平均繪製時間:\n");
+        printf("  - Clear: %.2f ms\n", (t1-t0)*1000);
+        printf("  - Background: %.2f ms\n", (t2-t1)*1000);
+        printf("  - Game objects: %.2f ms\n", (t3-t2)*1000);
+        printf("  - Flip: %.2f ms\n", (t4-t3)*1000);
+        printf("===================================\n\n");
+        
+        max_frame_time = 0.0;
+        freeze_frame = -1;
+    }
 }
 
 Game::~Game() {
