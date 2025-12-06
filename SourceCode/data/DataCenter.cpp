@@ -15,18 +15,24 @@ namespace DataSetting {
 }
 
 DataCenter::DataCenter() {
-	this->FPS = DataSetting::FPS;
-	this->window_width = DataSetting::window_width;
-	this->window_height = DataSetting::window_height;
-	this->game_field_length = DataSetting::game_field_length;
-	memset(key_state, false, sizeof(key_state));
-	memset(prev_key_state, false, sizeof(prev_key_state));
-	mouse = Point(0, 0);
-	memset(mouse_state, false, sizeof(mouse_state));
-	memset(prev_mouse_state, false, sizeof(prev_mouse_state));
-	player = new Player();
-	level = new Level();
+    this->FPS = DataSetting::FPS;
+    this->window_width = DataSetting::window_width;
+    this->window_height = DataSetting::window_height;
+    this->game_field_length = DataSetting::game_field_length;
+
+    delta_time = 0;
+    last_time = al_get_time();
+    
+    memset(key_state, false, sizeof(key_state));
+    memset(prev_key_state, false, sizeof(prev_key_state));
+    mouse = Point(0, 0);
+    memset(mouse_state, false, sizeof(mouse_state));
+    memset(prev_mouse_state, false, sizeof(prev_mouse_state));
+
+    player = new Player();
+    level = new Level();
 }
+
 
 DataCenter::~DataCenter() {
 	delete player;
@@ -40,4 +46,10 @@ DataCenter::~DataCenter() {
 	for(Bullet *&b : towerBullets) {
 		delete b;
 	}
+}
+
+void DataCenter::update_delta_time() {
+    double current = al_get_time();
+    delta_time = current - last_time;   // 上一幀到這一幀的秒數
+    last_time = current;
 }

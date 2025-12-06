@@ -94,6 +94,14 @@ public:
 	std::vector<Bullet*> towerBullets;
 private:
 	DataCenter();
+private:
+    double delta_time;
+    double last_time;
+public:
+    double get_delta_time() const { return delta_time; }
+    void update_delta_time();
+
+
 };
 
 #endif

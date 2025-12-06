@@ -91,7 +91,6 @@ Game::execute() {
  * @details Only one timer is created since a game and all its data should be processed synchronously.
  */
 Game::Game(bool testMode) {
-    DataCenter *DC = DataCenter::get_instance();
     GAME_ASSERT(al_init(), "failed to initialize allegro.");
 
     // initialize addons not related to audio
@@ -102,6 +101,7 @@ Game::Game(bool testMode) {
     addon_init &= al_init_image_addon();
     // !!! Do NOT init acodec here !!!
     GAME_ASSERT(addon_init, "failed to initialize allegro addons.");
+    DataCenter *DC = DataCenter::get_instance();
 
     if (testMode) {
         timer = nullptr;
@@ -210,6 +210,11 @@ Game::game_init() {
     dog = new Dog();
     dog -> init();
 
+    // block = new Block();
+    // block -> init(DC -> window_width, 225, 100, 225, 13);
+    blockManager = new BlockManager();
+    blockManager -> init();
+
 
     int refresh_rate = al_get_display_refresh_rate(display);
     printf("[INFO] 顯示器刷新率: %d Hz\n", refresh_rate);
@@ -261,6 +266,7 @@ Game::game_update() {
     //     last_time = now;
     // }
 	DataCenter *DC = DataCenter::get_instance();
+    DC->update_delta_time(); 
 	OperationCenter *OC = OperationCenter::get_instance();
 	SoundCenter *SC = SoundCenter::get_instance();
 	static ALLEGRO_SAMPLE_INSTANCE *background = nullptr;
@@ -296,6 +302,8 @@ Game::game_update() {
 		} case STATE::LEVEL: {
 			road -> update();
             dog -> update();
+            blockManager -> update();
+            // block -> update();
 			// static bool BGM_played = false;
 			// if(!BGM_played) {
 			// 	background = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
@@ -432,6 +440,12 @@ void Game::game_draw() {
             if (dog) {
                 dog->draw();
             }
+            if (blockManager) {
+                blockManager->draw();
+            }
+            // if (block) {
+            //     block->draw();
+            // }
             break;
         }
         case STATE::PAUSE:

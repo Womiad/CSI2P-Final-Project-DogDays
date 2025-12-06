@@ -6,6 +6,8 @@
 #include "Road.h"
 #include "Dog.h"
 
+#include "BlockManager.h"
+
 /**
  * @brief Main class that runs the whole game.
  * @details All game procedures must be processed through this class.
@@ -45,6 +47,8 @@ private:
 	//遊玩階段 相關資源
 	Road *road;
 	Dog *dog;
+	// Block *block; // 測試用
+	BlockManager *blockManager;
 	
 
 private:
