@@ -269,16 +269,16 @@ Game::game_update() {
     DC->update_delta_time(); 
 	OperationCenter *OC = OperationCenter::get_instance();
 	SoundCenter *SC = SoundCenter::get_instance();
-	static ALLEGRO_SAMPLE_INSTANCE *background = nullptr;
+	static ALLEGRO_SAMPLE_INSTANCE *background_music = nullptr;
 
 	switch(state) {
 		case STATE::START: {
-			static ALLEGRO_SAMPLE_INSTANCE *instance = nullptr;
+			// static ALLEGRO_SAMPLE_INSTANCE *instance = nullptr;
 
 			//bgm
 			static bool is_played = false;
 			if(!is_played) {
-				background = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
+				background_music = SC->play(background_sound_path, ALLEGRO_PLAYMODE_LOOP);
 				is_played = true;
 			}
 
@@ -302,7 +302,8 @@ Game::game_update() {
 		} case STATE::LEVEL: {
 			road -> update();
             dog -> update();
-            blockManager -> update();
+            blockManager -> update(dog);
+            blockManager -> checkCollision(dog);
             // block -> update();
 			// static bool BGM_played = false;
 			// if(!BGM_played) {
@@ -399,14 +400,14 @@ void Game::game_draw() {
     switch(state) {
         case STATE::START: {
             if (menu_banner) {
-                int title_w = al_get_bitmap_width(menu_banner);
+                // int title_w = al_get_bitmap_width(menu_banner);
                 int title_x = (DC->window_width) / 5 * 2;
                 int title_y = DC->window_height / 6;
                 al_draw_bitmap(menu_banner, title_x, title_y, 0);
             }
             
             if (menu_dog) {
-                int deco_w = al_get_bitmap_width(menu_dog);
+                // int deco_w = al_get_bitmap_width(menu_dog);
                 int deco_h = al_get_bitmap_height(menu_dog);
                 int deco_x = DC->window_width * 0.03;
                 int deco_y = (DC->window_height / 2 - deco_h / 2) * 1.2;

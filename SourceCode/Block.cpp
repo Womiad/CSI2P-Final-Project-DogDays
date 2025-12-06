@@ -23,7 +23,7 @@ void Block::init(int startX, int startY, int w, int h, int moveSpeed, BLOCKTYPE 
 
 
 void Block::update() {
-	DataCenter *DC = DataCenter::get_instance();
+	// DataCenter *DC = DataCenter::get_instance();
     if (state == STATE::MOVE) {
         x -= speed;  // 向左移動
     }

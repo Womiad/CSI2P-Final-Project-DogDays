@@ -10,7 +10,7 @@
 constexpr char road_img_path[] = "./assets/image/road.png";
 
 void Road::init() {
-    DataCenter *DC = DataCenter::get_instance();
+    // DataCenter *DC = DataCenter::get_instance();
     ImageCenter *IC = ImageCenter::get_instance();
 
     // ✅ 錯誤處理：檢查圖片是否載入成功

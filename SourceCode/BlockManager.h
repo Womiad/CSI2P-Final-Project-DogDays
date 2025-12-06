@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Block.h"
+#include "Dog.h"
 
 class BlockManager
 {
@@ -10,8 +11,10 @@ public:
     BlockManager() : state(STATE::MOVE) {}
 
     void init();
-    void update();
+    void update(Dog* dog);
     void draw();
+
+    void checkCollision(Dog* dog);
 
 private:
     enum class STATE {
