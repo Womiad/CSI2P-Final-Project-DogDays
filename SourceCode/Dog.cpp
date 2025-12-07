@@ -7,161 +7,21 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
-#include <allegro5/allegro_ttf.h>   // 如果使用 TTF 字型
+#include <allegro5/allegro_ttf.h>
 
 constexpr char dog1_img_path[] = "./assets/image/dog1.png";
-constexpr char dog2_img_path[] = "./assets/image/dog2.png"; // 30隻dog1
-constexpr char dog3_img_path[] = "./assets/image/dog3.png"; // 30隻dog2
+constexpr char dog2_img_path[] = "./assets/image/dog2.png";
+constexpr char dog3_img_path[] = "./assets/image/dog3.png";
 
-void Dog::init() {
-    // DataCenter *DC = DataCenter::get_instance();
-    ImageCenter *IC = ImageCenter::get_instance();
+constexpr char weapon_path[] = "./assets/image/bow.png";
+constexpr char arrow_path[]  = "./assets/image/arrow.png";
 
-    dog1_img = IC->get(dog1_img_path);
-    dog2_img = IC->get(dog2_img_path);
-    dog3_img = IC->get(dog3_img_path);
-
-    
-    if (!font) { 
-        font = al_load_ttf_font("./assets/font/Caviar_Dreams_Bold.ttf", 32, 0);
-        if (!font) font = al_create_builtin_font(); // fallback
-    }
-
-
-    x = 100;
-    y = 700;      // 這是底部位置，跟你現在的 dog1_y_bottom 一樣
-
-    num_dogs = 1;
-
-    vy = 0;
-    gravity = 0.6;       // 重力（可調）
-    jump_speed = -18;    // 跳躍初速度（可調）
-    on_ground = true;
-
-    jump_count = 0;   // 一開始沒跳
-    max_jump = 2;     // 二段跳
-}
-
-// 將 num_dogs 轉換成 dog1/dog2/dog3 的顯示數量
-void Dog::splitDogs(int total, int& n3, int& n2, int& n1)
+Dog::Dog() : x(100), y(700), num_dogs(1),
+             vy(0), gravity(0.6f), jump_speed(-18),
+             on_ground(true), jump_count(0), max_jump(2),
+             prev_num_dogs(0)  // 新增：追蹤上次的狗數量
 {
-    // 最大上限防爆畫
-    if (total > 126000)
-        total = 126000;
-
-    // 每 30 dog2 = 1 dog3，因此 1 dog3 = 900 dog1
-    const int DOG1_PER_DOG2 = 30;
-    const int DOG1_PER_DOG3 = 30 * 30;   // = 900
-
-    n3 = total / DOG1_PER_DOG3;
-    int remain = total % DOG1_PER_DOG3;
-
-    n2 = remain / DOG1_PER_DOG2;
-    remain = remain % DOG1_PER_DOG2;
-
-    n1 = remain;
 }
-
-
-
-
-Dog::DogDrawInfo Dog::getDogInfo(int type)
-{
-    switch (type) {
-        case 1: return { dog1_img, 0.4f };
-        case 2: return { dog2_img, 0.45f };
-        case 3: return { dog3_img, 0.5f };
-    }
-    return { dog1_img, 0.4f };
-}
-
-
-void Dog::update() {
-    DataCenter *DC = DataCenter::get_instance();
-
-    bool space_now = DC->key_state[ALLEGRO_KEY_SPACE];
-    bool space_prev = DC->prev_key_state[ALLEGRO_KEY_SPACE];
-    bool just_pressed_space = space_now && !space_prev;
-
-    // --- 跳躍條件：當前跳躍次數 < max_jump ---
-    if (just_pressed_space && jump_count < max_jump) {
-        vy = jump_speed;
-        on_ground = false;
-        jump_count++;
-    }
-
-    // --- 套用重力 ---
-    vy += gravity;
-    y += vy;
-
-    // --- 落地判定 ---
-    float ground_y = 700;
-
-    if (y > ground_y) {
-        y = ground_y;
-        vy = 0;
-        on_ground = true;
-        jump_count = 0;   // ★ 落地後重置跳躍次數
-    }
-}
-
-void Dog::draw() 
-{
-    int n3, n2, n1;
-    splitDogs(num_dogs, n3, n2, n1);
-
-    const float offsetX = 20;     
-    const float rowSpacing = 50;  
-    const int maxPerRow = 10;     
-
-    int dogIndex = 0;
-
-    auto drawOneDog = [&](ALLEGRO_BITMAP* bmp, float base_scale)
-    {
-        int w = al_get_bitmap_width(bmp);
-        int h = al_get_bitmap_height(bmp);
-
-        double t = al_get_time();
-        float y_vibration = 0.95f + 0.05f * sin(t * 2 * ALLEGRO_PI);
-
-        float scaleX = base_scale;
-        float scaleY = base_scale * y_vibration;
-
-        int row = dogIndex / maxPerRow;
-        int col = dogIndex % maxPerRow;
-
-        float draw_x = x + col * offsetX;
-        float draw_h = h * scaleY;
-        float draw_y = (y - draw_h) - row * rowSpacing;
-
-        al_draw_scaled_bitmap(
-            bmp,
-            0, 0, w, h,
-            draw_x, draw_y,
-            w * scaleX, draw_h,
-            0
-        );
-
-        dogIndex++;
-    };
-
-    for (int i=0;i<n1;i++) drawOneDog(getDogInfo(1).bmp, getDogInfo(1).scale);
-    for (int i=0;i<n2;i++) drawOneDog(getDogInfo(2).bmp, getDogInfo(2).scale);
-    for (int i=0;i<n3;i++) drawOneDog(getDogInfo(3).bmp, getDogInfo(3).scale);
-
-    // --- 數字顯示 ---
-    char buf[16];
-    sprintf(buf, "%d", num_dogs);
-
-    al_draw_text(
-        font,
-        al_map_rgb(0,0,0),
-        50, 50,
-        ALLEGRO_ALIGN_LEFT,
-        buf
-    );
-}
-
 
 Dog::~Dog()
 {
@@ -171,5 +31,179 @@ Dog::~Dog()
     }
 }
 
+void Dog::init()
+{
+    ImageCenter* IC = ImageCenter::get_instance();
 
+    dog1_img = IC->get(dog1_img_path);
+    dog2_img = IC->get(dog2_img_path);
+    dog3_img = IC->get(dog3_img_path);
 
+    bow_img   = IC->get(weapon_path);
+    arrow_img = IC->get(arrow_path);
+
+    if (!font) { 
+        font = al_load_ttf_font("./assets/font/Caviar_Dreams_Bold.ttf", 32, 0);
+        if (!font) font = al_create_builtin_font();
+    }
+}
+
+void Dog::splitDogs(int total, int& n3, int& n2, int& n1)
+{
+    const int DOG1_PER_DOG2 = 30;
+    const int DOG1_PER_DOG3 = 30 * 30; // 900
+
+    if (total > 126000)
+        total = 126000;
+
+    n3 = total / DOG1_PER_DOG3;
+    int remain = total % DOG1_PER_DOG3;
+
+    n2 = remain / DOG1_PER_DOG2;
+    remain = remain % DOG1_PER_DOG2;
+
+    n1 = remain;
+
+    refreshDogUnits(n1, n2, n3);
+}
+
+void Dog::refreshDogUnits(int n1, int n2, int n3)
+{
+    dogs.clear();
+
+    // 先預留空間，避免 vector 重新分配記憶體
+    int total = n1 + n2 + n3;
+    dogs.reserve(total);
+
+    auto createDog = [&](int type, float offsetX, float offsetY){
+        DogUnit d;
+        d.offset_x = offsetX;
+        d.offset_y = offsetY;
+        d.x = x + offsetX;
+        d.y = y + offsetY;
+        d.type = type;
+
+        d.weapon.init(bow_img, arrow_img);
+        d.weapon.setDogType(type);  // 設定狗的類型
+
+        // 射擊速度依狗種調整
+        if (type == 1)      d.weapon.setFireRate(1.0f);
+        else if (type == 2) d.weapon.setFireRate(0.7f);
+        else if (type == 3) d.weapon.setFireRate(0.4f);
+
+        dogs.push_back(d);
+        
+        // 關鍵修正：在 push_back 之後，綁定 vector 內部的位址
+        dogs.back().weapon.attach(&dogs.back().x, &dogs.back().y);
+    };
+
+    const float offsetX = 30;  // 增加間距讓狗不會重疊
+    const float rowSpacing = 80;
+    const int maxPerRow = 10;
+
+    int idx = 0;
+
+    auto batch = [&](int count, int type){
+        for (int i = 0; i < count; i++) {
+            int row = idx / maxPerRow;
+            int col = idx % maxPerRow;
+
+            float ox = col * offsetX;
+            float oy = -row * rowSpacing;
+
+            createDog(type, ox, oy);
+            idx++;
+        }
+    };
+
+    batch(n1, 1);
+    batch(n2, 2);
+    batch(n3, 3);
+}
+
+Dog::DogDrawInfo Dog::getDogInfo(int type)
+{
+    switch (type) {
+        case 1: return { dog1_img, 0.40f };
+        case 2: return { dog2_img, 0.55f };
+        case 3: return { dog3_img, 0.70f };
+    }
+    return { dog1_img, 0.4f };
+}
+
+void Dog::update()
+{
+    DataCenter* DC = DataCenter::get_instance();
+
+    bool space_now  = DC->key_state[ALLEGRO_KEY_SPACE];
+    bool space_prev = DC->prev_key_state[ALLEGRO_KEY_SPACE];
+
+    if (space_now && !space_prev && jump_count < max_jump) {
+        vy = jump_speed;
+        on_ground = false;
+        jump_count++;
+    }
+
+    vy += gravity;
+    y += vy;
+
+    float ground_y = 700;
+
+    if (y > ground_y) {
+        y = ground_y;
+        vy = 0;
+        on_ground = true;
+        jump_count = 0;
+    }
+
+    // 只在狗的數量改變時才重建陣列
+    if (num_dogs != prev_num_dogs) {
+        int n3, n2, n1;
+        splitDogs(num_dogs, n3, n2, n1);
+        prev_num_dogs = num_dogs;
+    }
+
+    // 更新每隻狗的絕對位置並更新武器
+    for (auto& d : dogs) {
+        d.x = x + d.offset_x;
+        d.y = y + d.offset_y;
+        
+        // 關鍵：確保武器有被更新
+        d.weapon.update(1.0f / 60.0f);
+    }
+}
+
+void Dog::draw()
+{
+    // 不要在這裡呼叫 splitDogs！
+    // splitDogs 會清空 dogs vector，導致所有武器消失
+    // 應該只在 num_dogs 改變時才呼叫
+
+    // 畫每隻狗和武器
+    for (auto& d : dogs) {
+        auto info = getDogInfo(d.type);
+
+        int img_w = al_get_bitmap_width(info.bmp);
+        int img_h = al_get_bitmap_height(info.bmp);
+
+        float draw_w = img_w * info.scale;
+        float draw_h = img_h * info.scale;
+
+        // 繪製狗（位置在 d.x, d.y - draw_h）
+        al_draw_scaled_bitmap(
+            info.bmp, 0, 0, img_w, img_h,
+            d.x, d.y - draw_h,
+            draw_w, draw_h,
+            0
+        );
+
+        // 繪製武器（會在狗的頭部附近）
+        d.weapon.draw();
+    }
+
+    // 顯示數字
+    char buf[32];
+    sprintf(buf, "%d", num_dogs);
+
+    al_draw_text(font, al_map_rgb(0,0,0), 50, 50, 0, buf);
+}

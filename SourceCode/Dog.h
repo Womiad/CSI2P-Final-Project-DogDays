@@ -4,50 +4,81 @@
 #include <allegro5/bitmap.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>   // 如果使用 TTF 字型
+#include "Weapon.h"
+
 
 class Dog
 {
 public:
-    Dog() {};
+    Dog();
     ~Dog();
+
     void init();
     void update();
     void draw();
 
+    void addDogs(int v) { num_dogs += v; if (num_dogs < 1) num_dogs = 1; }
+    // 狗的總數（以 dog1 單位）
+    int num_dogs;
+
     float getX() const { return x; }
     float getY() const { return y; }
-    float getWidth() const { return dog1_img ? al_get_bitmap_width(dog1_img) * 0.4f : 50; }
-    float getHeight() const { return dog1_img ? al_get_bitmap_height(dog1_img) * 0.4f : 50; }
 
-    int num_dogs = 1;
+    float getWidth() const { return w; }
+    float getHeight() const { return h;}
 
-    // --- 正確宣告：不要加 Dog:: ---
-    void splitDogs(int total, int& n3, int& n2, int& n1);
-
-    struct DogDrawInfo {
-        ALLEGRO_BITMAP* bmp;
-        float scale;
-    };
-
-    // --- 也不要加 Dog:: ---
-    DogDrawInfo getDogInfo(int type);
 
 private:
-    ALLEGRO_BITMAP *dog1_img = nullptr;
-    ALLEGRO_BITMAP *dog2_img = nullptr;
-    ALLEGRO_BITMAP *dog3_img = nullptr;
 
+    // ─────────── 每隻狗的資料 ───────────
+    struct DogUnit {
+        float x, y;
+        float offset_x, offset_y;  // 新增這兩行
+        int type;
+        Weapon weapon;
+    };
+
+    std::vector<DogUnit> dogs;
+    int prev_num_dogs;  // 新增這行
+
+    // 主狗的位置（參考點）
     float x, y;
 
+    float w, h;
+
+    // 物理
     float vy;
     float gravity;
     float jump_speed;
     bool on_ground;
 
-    ALLEGRO_FONT* font = nullptr;  // 新增字體指標
-
     int jump_count;
     int max_jump;
+
+    // 資源
+    ALLEGRO_BITMAP* dog1_img = nullptr;
+    ALLEGRO_BITMAP* dog2_img = nullptr;
+    ALLEGRO_BITMAP* dog3_img = nullptr;
+
+    ALLEGRO_BITMAP* bow_img = nullptr;
+    ALLEGRO_BITMAP* arrow_img = nullptr;
+
+    ALLEGRO_FONT* font = nullptr;
+
+
+    // 依數量分配各階層 dog1/dog2/dog3
+    void splitDogs(int total, int& n3, int& n2, int& n1);
+
+    // 重新產生 DogUnit
+    void refreshDogUnits(int n1, int n2, int n3);
+
+    // 畫狗時的資訊
+    struct DogDrawInfo {
+        ALLEGRO_BITMAP* bmp;
+        float scale;
+    };
+
+    DogDrawInfo getDogInfo(int type);
 };
 
 #endif
