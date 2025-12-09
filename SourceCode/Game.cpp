@@ -12,6 +12,8 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_acodec.h>
+#include "MonsterManager.h"
+#include "Monster.h"
 #include <vector>
 #include <cstring>
 
@@ -190,11 +192,11 @@ Game::game_init() {
 	// init font setting
 	FC->init();
 
-	ui = new UI();
-	ui->init();
+	// ui = new UI();
+	// ui->init();
 
 
-	DC->level->init();
+	// DC->level->init();
 
 	// game start
 	background = IC->get(background_img_path);
@@ -203,6 +205,8 @@ Game::game_init() {
 	menu_dog= IC -> get(start_menu_dog_path);
 	menu_start_btn = IC -> get(start_menu_btn_path);
 	menu_start_btn_hover = IC -> get(start_menu_btn_hover_path);
+
+    Monster::load_resources();  // 預載入所有怪物資源
 
 	// playing scene resources
 	road = new Road();
@@ -214,6 +218,8 @@ Game::game_init() {
     // block -> init(DC -> window_width, 225, 100, 225, 13);
     blockManager = new BlockManager();
     blockManager -> init();
+
+    monsterManager.init();
 
 
     int refresh_rate = al_get_display_refresh_rate(display);
@@ -267,7 +273,7 @@ Game::game_update() {
     // }
 	DataCenter *DC = DataCenter::get_instance();
     DC->update_delta_time(); 
-	OperationCenter *OC = OperationCenter::get_instance();
+	// OperationCenter *OC = OperationCenter::get_instance();
 	SoundCenter *SC = SoundCenter::get_instance();
 	static ALLEGRO_SAMPLE_INSTANCE *background_music = nullptr;
 
@@ -304,6 +310,7 @@ Game::game_update() {
             dog -> update();
             blockManager -> update(dog);
             blockManager -> checkCollision(dog);
+            monsterManager.update();
             // block -> update();
 			// static bool BGM_played = false;
 			// if(!BGM_played) {
@@ -444,6 +451,7 @@ void Game::game_draw() {
             if (blockManager) {
                 blockManager->draw();
             }
+            monsterManager.draw();
             // if (block) {
             //     block->draw();
             // }
@@ -478,4 +486,5 @@ Game::~Game() {
 	if(display) al_destroy_display(display);
 	if(timer) al_destroy_timer(timer);
 	if(event_queue) al_destroy_event_queue(event_queue);
+    Monster::unload_resources();  // 釋放資源
 }

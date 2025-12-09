@@ -7,11 +7,11 @@
 #include <allegro5/mouse.h>
 #include "../shapes/Point.h"
 
-class Player;
-class Level;
-class Monster;
-class Tower;
-class Bullet;
+// class Player;
+// class Level;
+// class Monster;
+// class Tower;
+// class Bullet;
 
 /**
  * @brief Stores generic global data and relatively small data structures.
@@ -66,32 +66,32 @@ public:
 	 */
 	bool prev_mouse_state[ALLEGRO_MOUSE_MAX_EXTRA_AXES];
 public:
-	/**
-	 * @brief Stores the basic information that a player should have.
-	 * @details For a tower-defense game, coin and health point is enough to represent a player.
-	 * @see Player
-	 */
-	Player *player;
-	/**
-	 * @brief Loads and stores the information of a level.
-	 * @see Level
-	 */
-	Level *level;
-	/**
-	 * @brief Raw list of Monster objects.
-	 * @see Monster
-	 */
-	std::vector<Monster*> monsters;
-	/**
-	 * @brief Raw list of Tower objects.
-	 * @see Tower
-	 */
-	std::vector<Tower*> towers;
-	/**
-	 * @brief Raw list of Bullet objects.
-	 * @see Bullet
-	 */
-	std::vector<Bullet*> towerBullets;
+	// /**
+	//  * @brief Stores the basic information that a player should have.
+	//  * @details For a tower-defense game, coin and health point is enough to represent a player.
+	//  * @see Player
+	//  */
+	// Player *player;
+	// /**
+	//  * @brief Loads and stores the information of a level.
+	//  * @see Level
+	//  */
+	// Level *level;
+	// /**
+	//  * @brief Raw list of Monster objects.
+	//  * @see Monster
+	//  */
+	// std::vector<Monster*> monsters;
+	// /**
+	//  * @brief Raw list of Tower objects.
+	//  * @see Tower
+	//  */
+	// std::vector<Tower*> towers;
+	// /**
+	//  * @brief Raw list of Bullet objects.
+	//  * @see Bullet
+	//  */
+	// std::vector<Bullet*> towerBullets;
 private:
 	DataCenter();
 private:

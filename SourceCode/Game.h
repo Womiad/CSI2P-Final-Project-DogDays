@@ -7,6 +7,8 @@
 #include "Dog.h"
 
 #include "BlockManager.h"
+#include "MonsterManager.h"
+#include "Monster.h"
 
 /**
  * @brief Main class that runs the whole game.
@@ -55,7 +57,9 @@ private:
 	ALLEGRO_DISPLAY *display;
 	ALLEGRO_TIMER *timer;
 	ALLEGRO_EVENT_QUEUE *event_queue;
-	UI *ui;
+	// UI *ui;
+
+	MonsterManager monsterManager;
 };
 
 #endif
