@@ -21,6 +21,8 @@ Dog::Dog() : x(100), y(700), num_dogs(1),
              on_ground(true), jump_count(0), max_jump(2),
              prev_num_dogs(0)  // 新增：追蹤上次的狗數量
 {
+    w = 300;
+    h = 288;
 }
 
 Dog::~Dog()
@@ -200,6 +202,17 @@ void Dog::draw()
         // 繪製武器（會在狗的頭部附近）
         d.weapon.draw();
     }
+
+    // // === 繪製碰撞箱（紅框） ===
+    // al_draw_rectangle(
+    //     x,                // 左
+    //     y - h,       // 上
+    //     x + w,       // 右
+    //     y,                // 下
+    //     al_map_rgb(255, 0, 0),
+    //     2
+    // );
+
 
     // 顯示數字
     char buf[32];

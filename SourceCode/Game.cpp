@@ -206,7 +206,7 @@ Game::game_init() {
 	menu_start_btn = IC -> get(start_menu_btn_path);
 	menu_start_btn_hover = IC -> get(start_menu_btn_hover_path);
 
-    Monster::load_resources();  // 預載入所有怪物資源
+    
 
 	// playing scene resources
 	road = new Road();
@@ -219,6 +219,7 @@ Game::game_init() {
     blockManager = new BlockManager();
     blockManager -> init();
 
+    MonsterManager::load_all_resources();
     monsterManager.init();
 
 
@@ -311,6 +312,7 @@ Game::game_update() {
             blockManager -> update(dog);
             blockManager -> checkCollision(dog);
             monsterManager.update();
+            
             // block -> update();
 			// static bool BGM_played = false;
 			// if(!BGM_played) {
@@ -452,8 +454,26 @@ void Game::game_draw() {
                 blockManager->draw();
             }
             monsterManager.draw();
-            // if (block) {
-            //     block->draw();
+            // Dog 的碰撞箱（綠色）// 碰撞箱有微妙的問題但它是個美麗的錯誤
+            // al_draw_rectangle(
+            //     dog->getX(), 
+            //     dog->getY() - dog->getHeight(),
+            //     dog->getX() + dog->getWidth(), 
+            //     dog->getY(),
+            //     al_map_rgb(0, 255, 0), 
+            //     3
+            // );
+            
+            // // Block 的碰撞箱（紅色）
+            // for (const auto& block : blockManager->getBlocks()) {
+            //     al_draw_rectangle(
+            //         block.getX(), 
+            //         block.getY(),
+            //         block.getX() + block.getWidth(), 
+            //         block.getY() + block.getHeight(),
+            //         al_map_rgb(255, 0, 0), 
+            //         3
+            //     );
             // }
             break;
         }
@@ -486,5 +506,5 @@ Game::~Game() {
 	if(display) al_destroy_display(display);
 	if(timer) al_destroy_timer(timer);
 	if(event_queue) al_destroy_event_queue(event_queue);
-    Monster::unload_resources();  // 釋放資源
+    MonsterManager::unload_all_resources();
 }

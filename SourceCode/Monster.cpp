@@ -1,124 +1,100 @@
-// Monster.cpp
 #include "Monster.h"
 #include <allegro5/allegro_primitives.h>
-
-// 初始化靜態成員
-ALGIF_ANIMATION* Monster::gif_lv1 = nullptr;
-ALGIF_ANIMATION* Monster::gif_lv2 = nullptr;
-ALGIF_ANIMATION* Monster::gif_lv3 = nullptr;
-ALGIF_ANIMATION* Monster::gif_lv4 = nullptr;
-ALGIF_ANIMATION* Monster::gif_lv5 = nullptr;
+#include <cmath>
 
 Monster::Monster()
 {
     x = y = 0;
     width = height = 50;
     speed = 2;
-    hp = hp_max = 10;
+    hp = hp_max = base_hp = 10;
+    scale = 1.0f;  // ⭐ 初始縮放比例為 1
     gif = nullptr;
 }
 
-void Monster::load_resources()
+Monster::~Monster()
 {
-    // 在遊戲開始時載入所有怪物的 GIF
-    if (!gif_lv1) gif_lv1 = algif_load_animation("assets/gif/monster/lv1_slime.gif");
-    // if (!gif_lv2) gif_lv2 = algif_load_animation("assets/gif/monster/lv2.gif");
-    // if (!gif_lv3) gif_lv3 = algif_load_animation("assets/gif/monster/lv3.gif");
-    // if (!gif_lv4) gif_lv4 = algif_load_animation("assets/gif/monster/lv4.gif");
-    // if (!gif_lv5) gif_lv5 = algif_load_animation("assets/gif/monster/lv5.gif");
 }
 
-void Monster::unload_resources()
+void Monster::setHPMultiplier(float multiplier)
 {
-    // 遊戲結束時釋放資源
-    if (gif_lv1) { algif_destroy_animation(gif_lv1); gif_lv1 = nullptr; }
-    // if (gif_lv2) { algif_destroy_animation(gif_lv2); gif_lv2 = nullptr; }
-    // if (gif_lv3) { algif_destroy_animation(gif_lv3); gif_lv3 = nullptr; }
-    // if (gif_lv4) { algif_destroy_animation(gif_lv4); gif_lv4 = nullptr; }
-    // if (gif_lv5) { algif_destroy_animation(gif_lv5); gif_lv5 = nullptr; }
+    hp_max = (int)(base_hp * multiplier);
+    hp = hp_max;
+    updateScale();  // ⭐ 血量改變時更新縮放
 }
 
-void Monster::init(int startX, int startY, MonsterTYPE t)
+void Monster::setHP(int newHP)
 {
-    type = t;
-    x = startX;
-    y = startY;
+    hp_max = newHP;
+    hp = hp_max;
+    updateScale();  // ⭐ 血量改變時更新縮放
+}
 
-    // 直接使用預載入的 GIF（不需要再次載入）
-    switch (type)
-    {
-        case MonsterTYPE::LV1_SLIME:
-            gif = gif_lv1;
-            speed = 2.0f;
-            hp_max = hp = 20;
-            break;
-
-        // case MonsterTYPE::LV2:
-        //     gif = gif_lv2;
-        //     speed = 2.6f;
-        //     hp_max = hp = 40;
-        //     break;
-
-        // case MonsterTYPE::LV3:
-        //     gif = gif_lv3;
-        //     speed = 3.0f;
-        //     hp_max = hp = 80;
-        //     break;
-
-        // case MonsterTYPE::LV4:
-        //     gif = gif_lv4;
-        //     speed = 3.5f;
-        //     hp_max = hp = 150;
-        //     break;
-
-        // case MonsterTYPE::LV5:
-        //     gif = gif_lv5;
-        //     speed = 4.0f;
-        //     hp_max = hp = 250;
-        //     break;
-    }
-
-    if (gif)
-    {
-        ALLEGRO_BITMAP* firstFrame = algif_get_bitmap(gif, al_get_time());
-        if (firstFrame)
-        {
-            width  = al_get_bitmap_width(firstFrame);
-            height = al_get_bitmap_height(firstFrame);
-        }
-    }
+// ⭐ 根據血量計算縮放比例
+void Monster::updateScale()
+{
+    // 方案 1: 線性縮放（血量翻倍，體積翻倍）
+    // scale = (float)hp_max / base_hp;
+    
+    // 方案 2: 平方根縮放（較溫和，推薦）
+    // 血量 x4 時，體積 x2
+    scale = sqrt((float)hp_max / base_hp);
+    
+    // 方案 3: 立方根縮放（更溫和）
+    // scale = pow((float)hp_max / base_hp, 1.0f / 3.0f);
+    
+    // 方案 4: 對數縮放（防止過大）
+    // scale = 1.0f + log10((float)hp_max / base_hp);
+    
+    // 限制最大縮放（防止太大）
+    if (scale > 3.0f) scale = 3.0f;
+    if (scale < 0.5f) scale = 0.5f;
 }
 
 void Monster::update()
 {
-    // 往左移動
     x -= speed;
 }
 
 void Monster::draw()
 {
     if (!gif) return;
-
-    // 取得目前動畫幀
+    
     ALLEGRO_BITMAP* bmp = algif_get_bitmap(gif, al_get_time());
     if (!bmp) return;
+    
+    // ⭐ 使用縮放繪製
+    float scaledWidth = width * scale;
+    float scaledHeight = height * scale;
+    
+    al_draw_scaled_bitmap(
+        bmp,
+        0, 0,                           // 來源 x, y
+        width, height,                  // 來源寬高（原始大小）
+        x, y - scaledHeight,           // 目標 x, y
+        scaledWidth, scaledHeight,     // 目標寬高（縮放後）
+        0                               // flags
+    );
+    
+    drawHealthBar();
+}
 
-    // 因為 gif 往上畫 (腳在 y)
-    al_draw_bitmap(bmp, x, y - height, 0);
-
-    // -------------------------
-    //    血條
-    // -------------------------
-    float barW = width;
+void Monster::drawHealthBar()
+{
+    float scaledWidth = width * scale;
+    float scaledHeight = height * scale;
+    
+    float barW = scaledWidth;  // ⭐ 血條寬度也跟著縮放
     float barH = 8;
-
     float barX = x;
-    float barY = y - height - 15;
-
+    float barY = y - scaledHeight - 15;
+    
     // 外框
-    al_draw_rectangle(barX, barY, barX + barW, barY + barH, al_map_rgb(0,0,0), 2);
-
+    al_draw_rectangle(barX, barY, barX + barW, barY + barH, 
+                      al_map_rgb(0,0,0), 2);
+    
     // 血量
     float hpPercent = (float)hp / hp_max;
-    al_draw_filled_rectangle(barX, barY, barX + barW * hpPercent, barY + barH, al_map_rgb(255,0,0));
+    al_draw_filled_rectangle(barX, barY, barX + barW * hpPercent, barY + barH, 
+                             al_map_rgb(255,0,0));
 }

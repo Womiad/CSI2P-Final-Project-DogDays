@@ -1,53 +1,50 @@
-// Monster.h
 #ifndef MONSTER_H
 #define MONSTER_H
 
 #include <allegro5/allegro.h>
 #include "algif5/algif.h"
 
-enum class MonsterTYPE
-{
-    LV1_SLIME,
-    LV2,
-    LV3,
-    LV4,
-    LV5
-};
-
 class Monster
 {
-private:
+protected:
     float x, y;
     float width, height;
     float speed;
     int hp, hp_max;
-    MonsterTYPE type;
+    int base_hp;
+    float scale;  // ⭐ 新增：縮放比例
+    
     ALGIF_ANIMATION* gif;
-
-    // 靜態資源池（所有怪物共用）
-    static ALGIF_ANIMATION* gif_lv1;
-    static ALGIF_ANIMATION* gif_lv2;
-    static ALGIF_ANIMATION* gif_lv3;
-    static ALGIF_ANIMATION* gif_lv4;
-    static ALGIF_ANIMATION* gif_lv5;
 
 public:
     Monster();
-    void init(int startX, int startY, MonsterTYPE t);
+    virtual ~Monster();
+
+    virtual void init(int startX, int startY) = 0;
+    virtual void load_gif() = 0;
+    
     void update();
     void draw();
     
-    // 預載入資源（在遊戲開始時呼叫一次）
-    static void load_resources();
-    static void unload_resources();
+    void setHPMultiplier(float multiplier);
+    void setHP(int newHP);
+    
+    // ⭐ 新增：更新縮放比例
+    void updateScale();
     
     float getX() const { return x; }
     float getY() const { return y; }
-    float getWidth() const { return width; }
-    float getHeight() const { return height; }
+    float getWidth() const { return width * scale; }  // ⭐ 考慮縮放
+    float getHeight() const { return height * scale; }
     int getHP() const { return hp; }
-    void takeDamage(int damage) { hp -= damage; if (hp < 0) hp = 0; }
+    int getMaxHP() const { return hp_max; }
+    int getBaseHP() const { return base_hp; }
     bool isDead() const { return hp <= 0; }
+    
+    void takeDamage(int damage) { hp -= damage; if (hp < 0) hp = 0; }
+
+protected:
+    void drawHealthBar();
 };
 
 #endif

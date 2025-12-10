@@ -4,14 +4,13 @@
 #include <allegro5/allegro_primitives.h>
 #include <algorithm>   // ✅ 加上這行
 
+#include <iostream>
+
 void BlockManager::init() {
     blocks.clear();
     
     spawnFrame = 0;
     spawnFrameInterval = 120; // 60 FPS → 30 frame = 0.5 秒
-
-    // spawnTimer = 0;
-    // spawnInterval = 0.5f; // 0.5 秒產生一個
 
     midY = 250;
     highY = 50;
@@ -73,6 +72,18 @@ void BlockManager::checkCollision(Dog* dog) {
         float dy = dog->getY();
         float dw = dog->getWidth();
         float dh = dog->getHeight();
+
+        // ⭐ 加入詳細的 debug 訊息
+
+        // std::cout << "=== Collision Check ===" << "\n";
+        // std::cout << "Block: x=" << bx << ", y=" << by 
+        //           << ", w=" << bw << ", h=" << bh << "\n";
+        // std::cout << "Block bounds: left=" << bx << ", right=" << (bx + bw)
+        //           << ", top=" << by << ", bottom=" << (by + bh) << "\n";
+        // std::cout << "Dog: x=" << dx << ", y=" << dy 
+        //           << ", w=" << dw << ", h=" << dh << "\n";
+        // std::cout << "Dog bounds: left=" << dx << ", right=" << (dx + dw)
+        //           << ", top=" << dy << ", bottom=" << (dy + dh) << "\n";
 
         // 2. 簡單 AABB 碰撞
         bool collided = !(dx + dw < bx || dx > bx + bw || dy + dh < by || dy > by + bh);

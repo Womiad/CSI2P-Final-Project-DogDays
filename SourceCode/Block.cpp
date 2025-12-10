@@ -15,6 +15,8 @@ void Block::init(int startX, int startY, int w, int h, int moveSpeed, BLOCKTYPE 
     type = t;
     value = val;
 
+    
+
     if (!font) { 
         font = al_load_ttf_font("./assets/font/Caviar_Dreams_Bold.ttf", 32, 0);
         if (!font) font = al_create_builtin_font(); // fallback

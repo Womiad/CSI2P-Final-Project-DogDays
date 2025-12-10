@@ -16,6 +16,8 @@ public:
 
     void checkCollision(Dog* dog);
 
+    std::vector<Block> getBlocks() { return blocks;}
+
 private:
     enum class STATE {
         MOVE,
