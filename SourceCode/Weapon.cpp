@@ -11,6 +11,38 @@ void Weapon::init(ALLEGRO_BITMAP* bowImg, ALLEGRO_BITMAP* arrowImg)
     dog_type = 1;  // 預設類型
 }
 
+void Weapon::setWeaponImage(ALLEGRO_BITMAP* bow, ALLEGRO_BITMAP* arrow)
+{
+    this->bow_img = bow;
+    this->arrow_img = arrow;
+}
+
+
+// void Weapon::setupBitmap(
+//         ALLEGRO_BITMAP* lv1_w, ALLEGRO_BITMAP* lv1_a, 
+//         ALLEGRO_BITMAP* lv2_w, ALLEGRO_BITMAP* lv2_a, 
+//         ALLEGRO_BITMAP* lv3_w, ALLEGRO_BITMAP* lv3_a, 
+//         ALLEGRO_BITMAP* lv4_w, ALLEGRO_BITMAP* lv4_a, 
+//         ALLEGRO_BITMAP* lv5_w, ALLEGRO_BITMAP* lv5_a, 
+//         ALLEGRO_BITMAP* lv6_w, ALLEGRO_BITMAP* lv6_a, 
+//         ALLEGRO_BITMAP* lv7_w, ALLEGRO_BITMAP* lv7_a, 
+//     )
+// {
+//     weapon_lv2_bitmap = lv1_w;
+//     weapon_lv3_bitmap = lv2_w;
+//     weapon_lv4_bitmap = lv3_w;
+//     weapon_lv5_bitmap = lv4_w;
+//     weapon_lv6_bitmap = lv5_w;
+//     weapon_lv7_bitmap = lv6_w;
+
+//     arrow_lv2_bitmap = lv1_a;
+//     arrow_lv3_bitmap = lv2_a;
+//     arrow_lv4_bitmap = lv3_a;
+//     arrow_lv5_bitmap = lv4_a;
+//     arrow_lv6_bitmap = lv5_a;
+//     arrow_lv7_bitmap = lv6_a;
+// }
+
 void Weapon::attach(float* hx, float* hy)
 {
     host_x = hx;

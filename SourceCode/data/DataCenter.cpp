@@ -29,6 +29,11 @@ DataCenter::DataCenter() {
     memset(mouse_state, false, sizeof(mouse_state));
     memset(prev_mouse_state, false, sizeof(prev_mouse_state));
 
+    playerHighestScore = 0;
+    nowScore = 1;
+    weaponLevel = 1;
+    idelWeaponLevel = 1;
+
     // player = new Player();
     // level = new Level();
 }

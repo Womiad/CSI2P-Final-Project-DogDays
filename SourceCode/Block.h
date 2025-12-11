@@ -7,7 +7,8 @@
 enum class BLOCKTYPE {
     ADD,        // +
     SUB,        // -
-    MUL         // x
+    MUL,        // x
+    WEAPON_LEVEL_UP
 };
 
 class Block
@@ -18,6 +19,8 @@ public:
     void init(int startX, int startY, int w, int h, int moveSpeed, BLOCKTYPE t, int val);
     void update();
     void draw();
+
+    static void setupBitmapResource(ALLEGRO_BITMAP* lv2, ALLEGRO_BITMAP* lv3, ALLEGRO_BITMAP* lv4, ALLEGRO_BITMAP* lv5, ALLEGRO_BITMAP* lv6, ALLEGRO_BITMAP* lv7);
     
     // --- 新增 getter ---
     int getX() const { return x; }
@@ -38,6 +41,13 @@ private:
     int value;   // <<< 新增
 
     ALLEGRO_FONT* font = nullptr;  // 新增字體指標
+
+    static ALLEGRO_BITMAP* weapon_lv2_bitmap;
+    static ALLEGRO_BITMAP* weapon_lv3_bitmap;
+    static ALLEGRO_BITMAP* weapon_lv4_bitmap;
+    static ALLEGRO_BITMAP* weapon_lv5_bitmap;
+    static ALLEGRO_BITMAP* weapon_lv6_bitmap;
+    static ALLEGRO_BITMAP* weapon_lv7_bitmap;
 
     int x, y;
     int width, height;

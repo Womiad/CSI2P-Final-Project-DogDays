@@ -2,11 +2,22 @@
 #include "Block.h"
 #include "data/DataCenter.h"
 #include <allegro5/allegro_primitives.h>
+#include "data/ImageCenter.h"
 #include <algorithm>   // ✅ 加上這行
 
 #include <iostream>
 
+constexpr char weapon2_img_path[] = "./assets/image/weapon/weapon_lv2.png";
+constexpr char weapon3_img_path[] = "./assets/image/weapon/weapon_lv3.png";
+constexpr char weapon4_img_path[] = "./assets/image/weapon/weapon_lv4.png";
+constexpr char weapon5_img_path[] = "./assets/image/weapon/weapon_lv5.png";
+constexpr char weapon6_img_path[] = "./assets/image/weapon/weapon_lv6.png";
+constexpr char weapon7_img_path[] = "./assets/image/weapon/weapon_lv7.png";
+
 void BlockManager::init() {
+
+    ImageCenter* IC = ImageCenter::get_instance();
+
     blocks.clear();
     
     spawnFrame = 0;
@@ -14,53 +25,100 @@ void BlockManager::init() {
 
     midY = 250;
     highY = 50;
+
+    Block::setupBitmapResource(
+        IC -> get(weapon2_img_path),
+        IC -> get(weapon3_img_path),
+        IC -> get(weapon4_img_path),
+        IC -> get(weapon5_img_path),
+        IC -> get(weapon6_img_path),
+        IC -> get(weapon7_img_path)
+    );
 }
-void BlockManager::update(Dog* dog) {
+void BlockManager::update(Dog* dog)
+{
     spawnFrame++;
 
+    DataCenter* DC = DataCenter::get_instance();
+
+    int currentWeaponLevel = DC->weaponLevel;
+    int idelWeaponLevel    = DC->idelWeaponLevel;
+
+    // ⭐ 檢查目前是否已有武器升級方塊
+    bool hasWeaponBlock = false;
+    for (auto &b : blocks) {
+        if (b.getType() == BLOCKTYPE::WEAPON_LEVEL_UP) {
+            hasWeaponBlock = true;
+            break;
+        }
+    }
+
     if (spawnFrame >= spawnFrameInterval) {
+
         spawnFrame = 0;
 
         Block b;
+
         int startX = 1280;
         int y = (rand() % 2 == 0 ? midY : highY);
 
-        // 【隨機 type】
-        BLOCKTYPE t;
-        int r = rand() % 3;
-        if (r == 0) t = BLOCKTYPE::ADD;
-        else if (r == 1) t = BLOCKTYPE::SUB;
-        else t = BLOCKTYPE::MUL;
+        // ⭐ 建立 type pool
+        std::vector<BLOCKTYPE> pool = {
+            BLOCKTYPE::ADD,
+            BLOCKTYPE::SUB,
+            BLOCKTYPE::MUL
+        };
 
-        // 【隨機數字】
+        // ⭐ 把武器升級加入 pool（只有兩個條件都成立時）
+        if (currentWeaponLevel < idelWeaponLevel && !hasWeaponBlock) {
+            pool.push_back(BLOCKTYPE::WEAPON_LEVEL_UP);
+        }
+
+        // ⭐ 從 pool 隨機取一個
+        BLOCKTYPE t = pool[rand() % pool.size()];
+
+
+        // ======= 隨機數字 =======
         int rem = 3;
-        if(dog -> num_dogs < 10) rem = 3;
-        else if(dog -> num_dogs < 20) rem = 6;
-        else if(dog -> num_dogs < 50) rem = 8;
+        if (dog->num_dogs < 10) rem = 3;
+        else if (dog->num_dogs < 20) rem = 6;
+        else if (dog->num_dogs < 50) rem = 8;
         else rem = 10;
 
         int val = (rand() % rem) + 1;
 
-        if(dog -> num_dogs >= 25 ){
-            if(t == BLOCKTYPE::SUB) val *= (dog -> num_dogs / 2);
+        if (dog->num_dogs >= 25) {
+            if (t == BLOCKTYPE::SUB) val *= (dog->num_dogs / 2);
         }
 
+
+        // ⭐ 武器升級 block 的 value = 下一個要顯示的武器等級
+        if (t == BLOCKTYPE::WEAPON_LEVEL_UP) {
+            val = currentWeaponLevel + 1;  // 例如 2→3→4...
+            if (val > idelWeaponLevel)
+                val = idelWeaponLevel;
+        }
+
+        // 建立 block
         b.init(startX, y, 100, 225, 8, t, val);
         blocks.push_back(b);
     }
 
-
+    // block 更新
     for (auto &b : blocks)
         b.update();
 
+    // 移除離開畫面的 block
     blocks.erase(
-    std::remove_if(blocks.begin(), blocks.end(),
-                   [](const Block& b) { return b.getX() + b.getWidth() < 0; }),
-    blocks.end()
-);
+        std::remove_if(blocks.begin(), blocks.end(),
+            [](const Block& b) { return b.getX() + b.getWidth() < 0; }),
+        blocks.end()
+    );
 }
 
+
 void BlockManager::checkCollision(Dog* dog) {
+    DataCenter *DC = DataCenter::get_instance();
     for (auto &b : blocks) {
         // 1. 取得 block 和 dog 的矩形
         int bx = b.getX();
@@ -100,6 +158,9 @@ void BlockManager::checkCollision(Dog* dog) {
                     break;
                 case BLOCKTYPE::MUL:
                     dog->num_dogs *= b.getValue();
+                    break;
+                case BLOCKTYPE::WEAPON_LEVEL_UP:
+                    DC -> weaponLevel = DC -> idelWeaponLevel;
                     break;
             }
 

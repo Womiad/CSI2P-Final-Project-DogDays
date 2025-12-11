@@ -92,6 +92,12 @@ public:
 	//  * @see Bullet
 	//  */
 	// std::vector<Bullet*> towerBullets;
+
+	int playerHighestScore;
+	int nowScore;
+	int weaponLevel;
+	int idelWeaponLevel;
+
 private:
 	DataCenter();
 private:

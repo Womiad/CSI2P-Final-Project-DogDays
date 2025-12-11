@@ -63,6 +63,22 @@ private:
     ALLEGRO_BITMAP* bow_img = nullptr;
     ALLEGRO_BITMAP* arrow_img = nullptr;
 
+    ALLEGRO_BITMAP* weapon_lv1_bitmap;
+    ALLEGRO_BITMAP* weapon_lv2_bitmap;
+    ALLEGRO_BITMAP* weapon_lv3_bitmap;
+    ALLEGRO_BITMAP* weapon_lv4_bitmap;
+    ALLEGRO_BITMAP* weapon_lv5_bitmap;
+    ALLEGRO_BITMAP* weapon_lv6_bitmap;
+    ALLEGRO_BITMAP* weapon_lv7_bitmap;
+
+    ALLEGRO_BITMAP* arrow_lv1_bitmap;
+    ALLEGRO_BITMAP* arrow_lv2_bitmap;
+    ALLEGRO_BITMAP* arrow_lv3_bitmap;
+    ALLEGRO_BITMAP* arrow_lv4_bitmap;
+    ALLEGRO_BITMAP* arrow_lv5_bitmap;
+    ALLEGRO_BITMAP* arrow_lv6_bitmap;
+    ALLEGRO_BITMAP* arrow_lv7_bitmap;
+
     ALLEGRO_FONT* font = nullptr;
 
 

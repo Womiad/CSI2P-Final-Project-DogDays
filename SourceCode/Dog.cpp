@@ -9,12 +9,28 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
 
+#include <iostream>
+
 constexpr char dog1_img_path[] = "./assets/image/dog1.png";
 constexpr char dog2_img_path[] = "./assets/image/dog2.png";
 constexpr char dog3_img_path[] = "./assets/image/dog3.png";
 
 constexpr char weapon_path[] = "./assets/image/bow.png";
 constexpr char arrow_path[]  = "./assets/image/arrow.png";
+
+constexpr char weapon2_img_path[] = "./assets/image/weapon/weapon_lv2.png";
+constexpr char weapon3_img_path[] = "./assets/image/weapon/weapon_lv3.png";
+constexpr char weapon4_img_path[] = "./assets/image/weapon/weapon_lv4.png";
+constexpr char weapon5_img_path[] = "./assets/image/weapon/weapon_lv5.png";
+constexpr char weapon6_img_path[] = "./assets/image/weapon/weapon_lv6.png";
+constexpr char weapon7_img_path[] = "./assets/image/weapon/weapon_lv7.png";
+
+constexpr char arrow2_img_path[] = "./assets/image/arrow.png";
+constexpr char arrow3_img_path[] = "./assets/image/weapon/arrow_lv3_lv4.png";
+constexpr char arrow4_img_path[] = "./assets/image/weapon/arrow_lv3_lv4.png";
+constexpr char arrow5_img_path[] = "./assets/image/weapon/arrow_lv5.png";
+constexpr char arrow6_img_path[] = "./assets/image/weapon/arrow_lv6.png";
+constexpr char arrow7_img_path[] = "./assets/image/weapon/arrow_lv7.png";
 
 Dog::Dog() : x(100), y(700), num_dogs(1),
              vy(0), gravity(0.6f), jump_speed(-18),
@@ -43,6 +59,22 @@ void Dog::init()
 
     bow_img   = IC->get(weapon_path);
     arrow_img = IC->get(arrow_path);
+
+    weapon_lv1_bitmap = IC->get(weapon_path);
+    weapon_lv2_bitmap = IC->get(weapon2_img_path);
+    weapon_lv3_bitmap = IC->get(weapon3_img_path);
+    weapon_lv4_bitmap = IC->get(weapon4_img_path);
+    weapon_lv5_bitmap = IC->get(weapon5_img_path);
+    weapon_lv6_bitmap = IC->get(weapon6_img_path);
+    weapon_lv7_bitmap = IC->get(weapon7_img_path);
+
+    arrow_lv1_bitmap = IC->get(arrow_path);
+    arrow_lv2_bitmap = IC->get(arrow_path);
+    arrow_lv3_bitmap = IC->get(arrow3_img_path);
+    arrow_lv4_bitmap = IC->get(arrow4_img_path);
+    arrow_lv5_bitmap = IC->get(arrow5_img_path);
+    arrow_lv6_bitmap = IC->get(arrow6_img_path);
+    arrow_lv7_bitmap = IC->get(arrow7_img_path);
 
     if (!font) { 
         font = al_load_ttf_font("./assets/font/Caviar_Dreams_Bold.ttf", 32, 0);
@@ -173,6 +205,72 @@ void Dog::update()
         // 關鍵：確保武器有被更新
         d.weapon.update(1.0f / 60.0f);
     }
+
+    // 更新DataCenter數據
+    DC -> nowScore = num_dogs;
+
+    if(num_dogs > DC->playerHighestScore) DC -> playerHighestScore = num_dogs;
+
+    if(DC -> nowScore >= 10 && DC -> nowScore < 50){
+        if(DC -> idelWeaponLevel < 2) DC -> idelWeaponLevel = 2;
+    }else if(DC -> nowScore >= 50 && DC -> nowScore < 300){
+        if(DC -> idelWeaponLevel < 3) DC -> idelWeaponLevel = 3;
+    }else if(DC -> nowScore >= 300 && DC -> nowScore < 1500){
+        if(DC -> idelWeaponLevel < 4) DC -> idelWeaponLevel = 4;
+    }else if(DC -> nowScore >= 1500 && DC -> nowScore < 9000){
+        if(DC -> idelWeaponLevel < 5) DC -> idelWeaponLevel = 5;
+    }else if(DC -> nowScore >= 9000 && DC -> nowScore < 45000){
+        if(DC -> idelWeaponLevel < 6) DC -> idelWeaponLevel = 6;
+    }else if(DC -> nowScore >= 9000 && DC -> nowScore < 2250000){
+        if(DC -> idelWeaponLevel < 7) DC -> idelWeaponLevel = 7;
+    }else if(DC -> nowScore >= 2250000){
+        if(DC -> idelWeaponLevel < 8) DC -> idelWeaponLevel = 8;
+    }else{
+        DC -> idelWeaponLevel = 1;
+    }
+
+    switch (DC -> weaponLevel)
+    {
+    case 1:
+        bow_img = weapon_lv1_bitmap;
+        arrow_img = arrow_lv1_bitmap;
+        break;
+    case 2:
+        bow_img = weapon_lv2_bitmap;
+        arrow_img = arrow_lv2_bitmap;
+        break;
+    case 3:
+        bow_img = weapon_lv3_bitmap;
+        arrow_img = arrow_lv3_bitmap;
+        break;
+    case 4:
+        bow_img = weapon_lv4_bitmap;
+        arrow_img = arrow_lv4_bitmap;
+        break;
+    case 5:
+        bow_img = weapon_lv5_bitmap;
+        arrow_img = arrow_lv5_bitmap;
+        break;
+    case 6:
+        bow_img = weapon_lv6_bitmap;
+        arrow_img = arrow_lv6_bitmap;
+        break;
+    case 7:
+        bow_img = weapon_lv7_bitmap;
+        arrow_img = arrow_lv7_bitmap;
+        break;
+    
+    default:
+        break;
+    }
+
+    for (auto& d : dogs) {
+        d.weapon.setWeaponImage(bow_img, arrow_img);
+    }
+
+
+    // std::cout << "score: " << DC -> nowScore << std::endl;
+    // std::cout << "idelWeaponLevel: " << DC -> idelWeaponLevel << std::endl;
 }
 
 void Dog::draw()
