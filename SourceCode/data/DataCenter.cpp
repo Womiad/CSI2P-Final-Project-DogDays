@@ -33,9 +33,20 @@ DataCenter::DataCenter() {
     nowScore = 1;
     weaponLevel = 1;
     idelWeaponLevel = 1;
+    playerLevel = 1;
+    monsterKills = 0;
 
     // player = new Player();
     // level = new Level();
+}
+
+void DataCenter::resetPlayerData(){
+    playerHighestScore = 0;
+    nowScore = 1;
+    weaponLevel = 1;
+    idelWeaponLevel = 1;
+    playerLevel = 1;
+    monsterKills = 0;
 }
 
 
@@ -57,4 +68,11 @@ void DataCenter::update_delta_time() {
     double current = al_get_time();
     delta_time = current - last_time;   // 上一幀到這一幀的秒數
     last_time = current;
+
+    if(playerHighestScore <= 50) playerLevel = 1;
+    else if(playerHighestScore > 50 && playerHighestScore <= 9000) playerLevel = 2;
+    else if(playerHighestScore > 9000 && playerHighestScore <= 225000) playerLevel = 3;
+    else if(playerHighestScore > 225000 && playerHighestScore <= 500000) playerLevel = 4;
+    else if(playerHighestScore > 500000) playerLevel = 5;
+    // else if(playerHighestScore > 3200 && playerHighestScore < 12800) playerLevel = 5;
 }

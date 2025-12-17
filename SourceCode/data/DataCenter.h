@@ -97,6 +97,8 @@ public:
 	int nowScore;
 	int weaponLevel;
 	int idelWeaponLevel;
+	int playerLevel;
+	int monsterKills;
 
 private:
 	DataCenter();
@@ -106,6 +108,8 @@ private:
 public:
     double get_delta_time() const { return delta_time; }
     void update_delta_time();
+
+	void resetPlayerData();
 
 
 };

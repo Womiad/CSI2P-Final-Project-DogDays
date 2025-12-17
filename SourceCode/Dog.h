@@ -27,6 +27,8 @@ public:
     float getWidth() const { return w; }
     float getHeight() const { return h;}
 
+    void resetPlayerData();
+
 
 private:
 

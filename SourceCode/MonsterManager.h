@@ -22,7 +22,7 @@ public:
     static void unload_all_resources();
 
     void init();
-    void update();
+    void update(Dog * player);
     void draw();
 
     // ⭐ 新增：設定怪物血量倍率
@@ -31,6 +31,7 @@ public:
     
     // ⭐ 新增：根據玩家等級計算血量倍率
     void updateHPByPlayerLevel(int playerLevel);
+
 
     const std::vector<Monster*>& getMonsters() const { return monsters; }
     void clear();

@@ -10,6 +10,8 @@
 #include "MonsterManager.h"
 #include "Monster.h"
 
+#include "GameOverFrame.h"
+
 /**
  * @brief Main class that runs the whole game.
  * @details All game procedures must be processed through this class.
@@ -60,6 +62,7 @@ private:
 	// UI *ui;
 
 	MonsterManager monsterManager;
+	GameOverFrame *gameOverFrame;
 };
 
 #endif

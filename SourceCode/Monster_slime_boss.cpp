@@ -1,18 +1,18 @@
-#include "Monster_Lv1_slime.h"
+#include "Monster_slime_boss.h"
 
-ALGIF_ANIMATION* Monster_Lv1_slime::slime_gif = nullptr;
+ALGIF_ANIMATION* Monster_slime_boss::slime_gif = nullptr;
 
-Monster_Lv1_slime::Monster_Lv1_slime() : Monster()
+Monster_slime_boss::Monster_slime_boss() : Monster()
 {
 }
 
-void Monster_Lv1_slime::load_resources()
+void Monster_slime_boss::load_resources()
 {
     if (!slime_gif)
-        slime_gif = algif_load_animation("assets/gif/monster/lv1_slime.gif");
+        slime_gif = algif_load_animation("assets/gif/monster/lv1_slime_sp.gif");
 }
 
-void Monster_Lv1_slime::unload_resources()
+void Monster_slime_boss::unload_resources()
 {
     if (slime_gif) {
         algif_destroy_animation(slime_gif);
@@ -20,19 +20,21 @@ void Monster_Lv1_slime::unload_resources()
     }
 }
 
-void Monster_Lv1_slime::load_gif()
+void Monster_slime_boss::load_gif()
 {
     gif = slime_gif;
 }
 
-void Monster_Lv1_slime::init(int startX, int startY)
+void Monster_slime_boss::init(int startX, int startY)
 {
     x = startX;
     y = startY;
     speed = 2.0f;
     
-    base_hp = 180;
+    base_hp = 20000;
     hp_max = hp = base_hp;
+    damagePerSecond = 200000000;
+    setHP(120000);
     
     load_gif();
     

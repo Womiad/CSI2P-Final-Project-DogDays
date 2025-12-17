@@ -31,8 +31,9 @@ void Monster_Lv4_wizard::init(int startX, int startY)
     y = startY;
     speed = 2.0f;
     
-    base_hp = 60;
+    base_hp = 5000;
     hp_max = hp = base_hp;
+    damagePerSecond = 10000;
     
     load_gif();
     

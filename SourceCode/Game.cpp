@@ -222,6 +222,9 @@ Game::game_init() {
     MonsterManager::load_all_resources();
     monsterManager.init();
 
+    gameOverFrame = new GameOverFrame();
+    gameOverFrame -> init();
+
 
     int refresh_rate = al_get_display_refresh_rate(display);
     printf("[INFO] 顯示器刷新率: %d Hz\n", refresh_rate);
@@ -281,6 +284,10 @@ Game::game_update() {
 	switch(state) {
 		case STATE::START: {
 			// static ALLEGRO_SAMPLE_INSTANCE *instance = nullptr;
+            gameOverFrame -> resetBtn();
+            dog -> resetPlayerData();
+            DC -> resetPlayerData();
+            monsterManager.clear();
 
 			//bgm
 			static bool is_played = false;
@@ -311,7 +318,11 @@ Game::game_update() {
             dog -> update();
             blockManager -> update(dog);
             blockManager -> checkCollision(dog);
-            monsterManager.update();
+            monsterManager.update(dog);
+
+            if(dog -> num_dogs <= 0){
+                state = STATE::PAUSE;
+            }
             
             // block -> update();
 			// static bool BGM_played = false;
@@ -335,6 +346,10 @@ Game::game_update() {
 			// }
 			break;
 		} case STATE::PAUSE: {
+            gameOverFrame -> update();
+            if(gameOverFrame -> btn_clicked){
+                state = STATE::START;
+            }
 			// if(DC->key_state[ALLEGRO_KEY_P] && !DC->prev_key_state[ALLEGRO_KEY_P]) {
 			// 	SC->toggle_playing(background);
 			// 	debug_log("<Game> state: change to LEVEL\n");
@@ -454,6 +469,7 @@ void Game::game_draw() {
                 blockManager->draw();
             }
             monsterManager.draw();
+
             // Dog 的碰撞箱（綠色）// 碰撞箱有微妙的問題但它是個美麗的錯誤
             // al_draw_rectangle(
             //     dog->getX(), 
@@ -478,6 +494,19 @@ void Game::game_draw() {
             break;
         }
         case STATE::PAUSE:
+            if (road) {
+                road->draw();
+            }
+            if (dog) {
+                dog->draw();
+            }
+            if (blockManager) {
+                blockManager->draw();
+            }
+            monsterManager.draw();
+
+            gameOverFrame->draw();
+            break;
         case STATE::END:
             break;
     }

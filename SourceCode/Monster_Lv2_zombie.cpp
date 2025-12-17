@@ -31,9 +31,11 @@ void Monster_Lv2_zombie::init(int startX, int startY)
     y = startY;
     speed = 2.0f;
     
-    base_hp = 40;
+    base_hp = 350;
     hp_max = hp = base_hp;
-    
+
+    damagePerSecond = 10;
+
     load_gif();
     
     if (gif)

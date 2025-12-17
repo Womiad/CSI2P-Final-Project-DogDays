@@ -41,6 +41,11 @@ Dog::Dog() : x(100), y(700), num_dogs(1),
     h = 288;
 }
 
+void Dog::resetPlayerData(){
+    num_dogs = 1;
+    prev_num_dogs = 0;
+}
+
 Dog::~Dog()
 {
     if (font) {
@@ -169,6 +174,8 @@ void Dog::update()
 {
     DataCenter* DC = DataCenter::get_instance();
 
+    if(num_dogs <= 0) {std::cout << "GameOver!!!!!\n";  return;}
+
     bool space_now  = DC->key_state[ALLEGRO_KEY_SPACE];
     bool space_prev = DC->prev_key_state[ALLEGRO_KEY_SPACE];
 
@@ -224,7 +231,7 @@ void Dog::update()
     }else if(DC -> nowScore >= 9000 && DC -> nowScore < 2250000){
         if(DC -> idelWeaponLevel < 7) DC -> idelWeaponLevel = 7;
     }else if(DC -> nowScore >= 2250000){
-        if(DC -> idelWeaponLevel < 8) DC -> idelWeaponLevel = 8;
+        if(DC -> idelWeaponLevel < 8) DC -> idelWeaponLevel = 7; // 沒有8
     }else{
         DC -> idelWeaponLevel = 1;
     }

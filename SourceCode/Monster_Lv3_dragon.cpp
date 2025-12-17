@@ -31,8 +31,9 @@ void Monster_Lv3_dragon::init(int startX, int startY)
     y = startY;
     speed = 2.0f;
     
-    base_hp = 60;
+    base_hp = 1000;
     hp_max = hp = base_hp;
+    damagePerSecond = 1000;
     
     load_gif();
     
